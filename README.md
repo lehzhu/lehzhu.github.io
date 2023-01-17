@@ -1,2 +1,0 @@
-# lezhu.ca
-personal website 
