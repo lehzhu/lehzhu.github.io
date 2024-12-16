@@ -20,6 +20,10 @@
 				padding: 20px;
 			}
 			.project-card {
+				display: flex;
+				flex-direction: column;
+				justify-content: space-between; /* Ensures content and links align properly */
+				height: 100%; /* Makes all project cards equal in height */
 				border: 1px solid #ddd;
 				border-radius: 10px;
 				overflow: hidden;
@@ -27,6 +31,7 @@
 				box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 				transition: transform 0.3s, box-shadow 0.3s;
 			}
+
 			.project-card:hover {
 				transform: translateY(-5px);
 				box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -48,18 +53,26 @@
 				font-size: 1em;
 				color: #666;
 			}
+
 			.project-card .links {
 				display: flex;
 				justify-content: space-between;
+				align-items: center; /* Ensures all buttons are vertically aligned */
 				padding: 10px 15px;
 				background: #f5f5f5;
+				margin: 0; /* Removes any unwanted margin */
 			}
+
 			.project-card .links a {
 				text-decoration: none;
 				color: #007BFF;
 				font-weight: bold;
 				transition: color 0.3s;
+				margin: 0; /* Ensures consistent spacing */
+				padding: 0; /* Removes unnecessary padding */
+				line-height: 1.5; /* Ensures consistent line height */
 			}
+
 			.project-card .links a:hover {
 				color: #0056b3;
 			}
@@ -102,14 +115,14 @@
 
 						<!-- Project 2 -->
 						<div class="project-card">
-							<img src="imaxdraft.gif" alt="IMAX Theater Search">
+							<img src="regression.gif" alt="Linear Regression Tutorial">
 							<div class="content">
-								<h3>IMAX Theater Search</h3>
-								<p>TypeScript, Node.js, ThreeJS</p>
+								<h3>Linear Regression Tutorial</h3>
+								<p>Python, Streamlit, pandas</p>
 							</div>
 							<div class="links">
-								<a href="https://github.com/lehzhu/liemax" target="_blank">Work in Progress</a>
-								<!--- <a href="https://liemax.ca" target="_blank">Work in Progress</a> -->
+								<a href="https://github.com/lehzhu/regression-analysis/tree/main" target="_blank">Github</a>
+								<a href="https://youtu.be/Ezx6EeotCBk" target="_blank">Demo Video</a>
 							</div>
 						</div>
 						
