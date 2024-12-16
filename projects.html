@@ -6,28 +6,71 @@
 -->
 <html>
 	<head>
-		<!-- Google tag (gtag.js) -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=G-0H2MXR6PLZ"></script>
-		<script>
-		  window.dataLayer = window.dataLayer || [];
-		  function gtag(){dataLayer.push(arguments);}
-		  gtag('js', new Date());
-
-		  gtag('config', 'G-0H2MXR6PLZ');
-		</script>
 		<title>Projects</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="assets/css/main.css" />
 		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+		<style>
+			/* Custom Styles for Projects Section */
+			.project-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+				gap: 20px;
+				padding: 20px;
+			}
+			.project-card {
+				border: 1px solid #ddd;
+				border-radius: 10px;
+				overflow: hidden;
+				background: #fff;
+				box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+				transition: transform 0.3s, box-shadow 0.3s;
+			}
+			.project-card:hover {
+				transform: translateY(-5px);
+				box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+			}
+			.project-card img {
+				width: 100%;
+				height: 200px;
+				object-fit: cover;
+			}
+			.project-card .content {
+				padding: 15px;
+			}
+			.project-card .content h3 {
+				margin-top: 0;
+				font-size: 1.5em;
+				color: #333;
+			}
+			.project-card .content p {
+				font-size: 1em;
+				color: #666;
+			}
+			.project-card .links {
+				display: flex;
+				justify-content: space-between;
+				padding: 10px 15px;
+				background: #f5f5f5;
+			}
+			.project-card .links a {
+				text-decoration: none;
+				color: #007BFF;
+				font-weight: bold;
+				transition: color 0.3s;
+			}
+			.project-card .links a:hover {
+				color: #0056b3;
+			}
+		</style>
 	</head>
 	<body class="is-preload">
 		<div id="page-wrapper">
 
-			
 			<!-- Header -->
 			<header id="header">
-				<h1 id="logo"></h1>
+				<h1 id="logo">Portfolio Projects</h1>
 				<nav id="nav">
 					<ul>
 						<li><a href="index.html">About</a></li>
@@ -38,45 +81,79 @@
 			</header>
 
 			<!-- Main -->
-				<div id="main" class="wrapper style1">
-					<div class="container">
-						<h2>Skills</h2>
-						<p><strong>Languages:</strong> Python, C/C++, Java, SQL, JavaScript, PHP, Swift, Assembly <br />
-							<strong>Technical Tools:</strong> Git, AWS, Unix, JIRA, Power BI</p>
-						<hr />
-						<h2>Projects</h2>
-						<!-- Content -->
-							<section id="content">
-								<img src="images/ecoprint.png"  class="image fit" alt="Ecoprint Preview" />
-								<h3 style="margin-bottom: 0px;">EcoPrint</h3>
-								<p style="margin-bottom: 0px;">React, MongoDB, Node.js, Express, Chart.js, JavaScript, CSS</p>
-								<a>View</a>
-							</section>
-							<br/>
-							<br/>
-						<!-- Content -->
-							<section id="content">
-								<img src="images/ahrise.png"  class="image fit" alt="Ahrise Preview" />
-								<h3 style="margin-bottom: 0px;">AhRise</h3>
-								<p style="margin-bottom: 0px;">JavaScript, Velo, CSS</p>
-								<a>View</a>
-							</section>
+			<div id="main" class="wrapper style1">
+				<div class="container">
+					
+					<h2>Projects</h2>
+					
+					<div class="project-grid">
+						<!-- Project 1 -->
+						<div class="project-card">
+							<img src="emissions.gif" alt="Travel Emissions Calculator">
+							<div class="content">
+								<h3>Travel Emissions Calculator</h3>
+								<p>Python, Streamlit, GeoPy</p>
+							</div>
+							<div class="links">
+								<a href="https://github.com/lehzhu/co2calc/tree/main" target="_blank">GitHub</a>
+								<a href="https://emissions.replit.app" target="_blank">Deployment</a>
+							</div>
+						</div>
 
+						<!-- Project 2 -->
+						<div class="project-card">
+							<img src="imaxdraft.gif" alt="IMAX Theater Search">
+							<div class="content">
+								<h3>IMAX Theater Search</h3>
+								<p>TypeScript, Node.js, ThreeJS</p>
+							</div>
+							<div class="links">
+								<a href="https://github.com/lehzhu/liemax" target="_blank">Work in Progress</a>
+								<!--- <a href="https://liemax.ca" target="_blank">Work in Progress</a> -->
+							</div>
+						</div>
+						
+						<!-- Project 3 -->
+						<div class="project-card">
+							<img src="workout.gif" alt="Personalized Workout Plan">
+							<div class="content">
+								<h3>Personalized Workout Plans</h3>
+								<p>TypeScript, Vite, Express, Postgres</p>
+							</div>
+							<div class="links">
+								<a href="https://github.com/lehzhu/personalized-workout-plan" target="_blank">GitHub</a>
+								<a href="https://www.youtube.com/watch?v=Kaa6M42kSP0" target="_blank">Demo Video</a>
+							</div>
+						</div>
+
+						<!-- Project 4 -->
+						<div class="project-card">
+							<img src="versa.gif" alt="VERSA: Academic Paper Chatbot">
+							<div class="content">
+								<h3>VERSA: Academic Paper Chatbot</h3>
+								<p>Python, Reflex, React</p>
+							</div>
+							<div class="links">
+								<a href="https://github.com/lahacks-2024/reflex-app-v1" target="_blank">GitHub</a>
+								<a href="https://versa.reflex.run" target="_blank">Deployment</a>
+							</div>
+						</div>
 					</div>
-				</div>
 
+				</div>
+			</div>
 
 		</div>
 
 		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/jquery.scrolly.min.js"></script>
-			<script src="assets/js/jquery.dropotron.min.js"></script>
-			<script src="assets/js/jquery.scrollex.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/jquery.scrolly.min.js"></script>
+		<script src="assets/js/jquery.dropotron.min.js"></script>
+		<script src="assets/js/jquery.scrollex.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
 
 	</body>
 </html>
