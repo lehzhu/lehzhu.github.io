@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini-BCS: Which AI Model Actually Handles Card Support? | Veris AI</title>
+  <!-- v7 — updated with Round 2 data: 5 models, 3 runs × 100 scenarios × 3 evals -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #060606;
+      --text: #f5f5f5;
+      --muted: #b2b2b2;
+      --border: rgba(255,255,255,0.12);
+      --green-1: #7bb14b;
+      --green-2: #6aa13d;
+      --green-3: #4c7e2a;
+      --green-4: #2e5e1a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+    }
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0.4));
+      padding: 18px 36px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav .brand {
+      font-size: 0.95rem; letter-spacing: 2px; font-weight: 600;
+      border: 1px solid #fff; padding: 4px 8px; display: inline-block;
+    }
+    .nav .links { display: flex; gap: 24px; align-items: center; font-size: 0.8rem; letter-spacing: 1px; }
+    .nav .links a { color: #fff; text-decoration: none; opacity: 0.8; }
+    .nav .demo { border: 1px solid #fff; padding: 6px 12px; }
+
+    .hero {
+      padding: 120px 36px 40px; min-height: 55vh; position: relative; overflow: hidden;
+    }
+    .hero-meta { color: var(--muted); font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+    h1 { font-size: 2.8rem; font-weight: 500; margin-bottom: 14px; }
+    .subtitle { font-size: 1.05rem; color: var(--muted); max-width: 780px; }
+
+    .back-btn { margin-top: 16px; display: inline-block; padding: 6px 10px; border: 1px solid var(--border); color: #fff; text-decoration: none; font-size: 0.75rem; letter-spacing: 1px; }
+
+    .stripes { position: absolute; left: 0; right: 0; bottom: 0; height: 90px; display: grid; grid-template-rows: repeat(4, 1fr); }
+    .stripes div:nth-child(1) { background: var(--green-1); }
+    .stripes div:nth-child(2) { background: var(--green-2); }
+    .stripes div:nth-child(3) { background: var(--green-3); }
+    .stripes div:nth-child(4) { background: var(--green-4); }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px 36px 100px; }
+    h2 { font-size: 1.8rem; margin: 56px 0 14px; color: #fff; }
+    h3 { font-size: 1.2rem; margin: 28px 0 10px; }
+    p { margin-bottom: 12px; color: rgba(255,255,255,0.82); }
+    ul { margin: 0 0 16px 20px; }
+    li { margin-bottom: 6px; color: rgba(255,255,255,0.82); }
+
+    .abstract { border-left: 3px solid var(--green-1); padding: 16px 20px; margin: 24px 0 32px; background: rgba(123,177,75,0.06); border-radius: 0 10px 10px 0; }
+    .abstract p { font-size: 0.95rem; margin-bottom: 8px; }
+    .abstract p:last-child { margin-bottom: 0; }
+
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 16px 0 8px; }
+    .stat { background: rgba(255,255,255,0.04); border: 1px solid var(--border); padding: 14px; }
+    .stat .label { font-size: 0.75rem; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
+    .stat .value { font-size: 1.2rem; font-weight: 600; margin-top: 4px; }
+
+    .chart-wrap { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 18px; margin: 18px 0; border-radius: 12px; }
+    .chart-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 8px; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid var(--border); padding: 8px 10px; font-size: 0.85rem; }
+    th { background: rgba(255,255,255,0.06); }
+
+    .model-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .badge { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); padding: 6px 10px; border-radius: 999px; font-size: 0.8rem; }
+    .badge img { width: 18px; height: 18px; }
+
+    .footnote { color: var(--muted); font-size: 0.85rem; margin-top: 10px; }
+
+    .heat-table th, .heat-table td { font-size: 0.72rem; padding: 6px 6px; }
+    .heat-table th { white-space: nowrap; }
+    .heat-table td { text-align: center; }
+
+    .finding { border: 1px solid var(--border); padding: 18px 20px; margin: 20px 0; background: rgba(255,255,255,0.03); border-radius: 10px; }
+    .finding h3 { margin: 0 0 8px; font-size: 1.1rem; color: var(--green-1); }
+    .finding p { font-size: 0.92rem; margin-bottom: 6px; }
+    .finding p:last-child { margin-bottom: 0; }
+
+    .appendix { border-top: 1px solid var(--border); margin-top: 56px; padding-top: 24px; }
+    .appendix h2 { font-size: 1.4rem; color: var(--muted); margin-top: 0; }
+    .appendix p { font-size: 0.9rem; }
+
+    .radar-layout { display: grid; grid-template-columns: 1fr 260px; gap: 16px; align-items: start; }
+    .radar-canvas { min-height: 400px; }
+    #radarChart { width: 100% !important; height: 400px !important; }
+    .radar-legend { border: 1px solid var(--border); padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.03); }
+    .radar-legend h4 { font-size: 0.75rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; padding: 6px 4px; cursor: pointer; border-radius: 6px; }
+    .legend-item:hover { background: rgba(255,255,255,0.05); }
+    .legend-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.3); }
+    .legend-label { font-size: 0.8rem; color: #f1f1f1; flex: 1; }
+    .legend-toggle { width: 14px; height: 14px; border: 1px solid rgba(255,255,255,0.5); border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; }
+    .legend-item.off .legend-label { text-decoration: line-through; opacity: 0.55; }
+    .legend-item.off .legend-toggle { background: transparent; color: transparent; }
+    .legend-item.on .legend-toggle { background: #22c55e; color: #0b0b0f; }
+    .legend-btn { width: 100%; margin: 8px 0 6px; padding: 6px 8px; font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; border-radius: 6px; cursor: pointer; }
+    .legend-btn:hover { background: rgba(255,255,255,0.1); }
+    .legend-only { margin-left: auto; font-size: 0.7rem; border: 1px solid var(--border); padding: 2px 6px; border-radius: 6px; color: #fff; opacity: 0.8; }
+
+    @media (max-width: 900px) {
+      .radar-layout { grid-template-columns: 1fr; }
+      .radar-legend { order: -1; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand">VERIS</div>
+    <div class="links">
+      <a href="https://veris.ai/technology">TECHNOLOGY</a>
+      <a href="https://veris.ai/team">TEAM</a>
+      <a href="https://veris.ai/blog">BLOG</a>
+      <a class="demo" href="https://veris.ai/demo">DEMO</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <a class="back-btn" href="https://veris.ai/blog">&larr; BACK TO BLOGS</a>
+    <div class="hero-meta">February 2026</div>
+    <h1>Mini-BCS: Which AI Model Actually Handles Card Support?</h1>
+    <p class="subtitle">We put 5 models through 100 real banking scenarios across 3 independent runs with a 41-check rubric. The results reveal that the best model for information gathering isn't the best for error recovery&mdash;and that model selection depends on which failures your business can tolerate.</p>
+    <div class="stripes"><div></div><div></div><div></div><div></div></div>
+  </section>
+
+  <section class="container">
+
+    <!-- ============================== -->
+    <!-- ABSTRACT                        -->
+    <!-- ============================== -->
+    <div class="abstract">
+      <p>Standard LLM leaderboards rank models on aggregate scores, but aggregate scores hide the trade-offs that matter in production. A model that aces information gathering but botches error recovery will behave very differently from one that does the opposite&mdash;even if their overall numbers are close. We introduce Mini-BCS, a card-replacement support benchmark built on the Veris simulator, and use it to evaluate 5 models across 41 behavioral checks grouped into 8 categories. Each model ran 3 independent times through 100 scenarios (~300 sessions per model, ~900 gradings each). The result: a 5-point spread in overall pass rate, but a 65-point spread at the category level. Model selection is a category-level decision.</p>
+    </div>
+
+    <div class="model-badges" id="modelBadges"></div>
+
+    <!-- ============================== -->
+    <!-- INTRO                           -->
+    <!-- ============================== -->
+    <h2>Introduction</h2>
+    <p>In 2026, the question for AI-powered customer support has shifted from "Can it handle a conversation?" to "Can it handle the <em>right</em> steps in the <em>right</em> order?" Card replacement workflows involve identity verification, card identification, delivery scheduling, freeze decisions, and status lookups&mdash;all stateful, all with compliance implications.</p>
+    <p>The competitive landscape makes this harder to navigate:</p>
+    <ul>
+      <li><strong>DeepSeek V3.2</strong> positions itself as a high-throughput generalist with strong tool use&mdash;and proves it, posting the highest overall pass rate (93.4%).</li>
+      <li><strong>GPT-5 (Azure)</strong> emphasizes reliability and policy adherence, with the best delivery confirmation score of any model tested.</li>
+      <li><strong>GPT-OSS-120b</strong> offers an open-weight alternative to GPT-5 with solid replacement-flow handling.</li>
+      <li><strong>SmolLM3-3B</strong> proves that a 3-billion-parameter model can match GPT-5 on overall pass rate at a fraction of the compute cost.</li>
+      <li><strong>Grok-3-fast</strong> optimizes for speed and leads on status updates and replacement execution, but trades off error handling catastrophically.</li>
+    </ul>
+    <p>The problem: evaluating these models with a single aggregate score tells you almost nothing about which one to deploy. Mini-BCS uses the Veris simulator to break performance down by the operational categories that actually matter.</p>
+
+    <!-- ============================== -->
+    <!-- METHODS                         -->
+    <!-- ============================== -->
+    <h2>Methods</h2>
+    <p>Mini-BCS targets stateful tool-use evaluation in a banking environment. The benchmark is designed to expose differences between models at the category level, not just the aggregate level.</p>
+    <div class="stat-grid">
+      <div class="stat"><div class="label">Models Tested</div><div class="value">5</div></div>
+      <div class="stat"><div class="label">Runs / Model</div><div class="value">3</div></div>
+      <div class="stat"><div class="label">Sessions / Model</div><div class="value">~300</div></div>
+      <div class="stat"><div class="label">Checks / Session</div><div class="value">41</div></div>
+      <div class="stat"><div class="label">Evals / Run</div><div class="value">3</div></div>
+      <div class="stat"><div class="label">Grader Consistency</div><div class="value">&ge; 96.7%</div></div>
+    </div>
+
+    <p><strong>Stateful simulation:</strong> Unlike static benchmarks, the Veris simulator maintains durable backend state. If an agent marks a card as frozen in step 2, that state persists through the rest of the session. This catches models that "hallucinate" confirmations without executing tool calls.</p>
+    <p><strong>Multi-run design:</strong> Each model ran 3 independent times through the full 100-scenario set. This gives ~300 sessions per model, providing enough data to measure both model performance and run-to-run stability. Pass rates are computed using majority vote across 3 evaluations per session.</p>
+    <p><strong>41-check rubric:</strong> Each session is graded on 41 behavioral checks across 8 categories: data accuracy, delivery confirmation, error handling, freeze handling, information gathering, replacement execution, scope management, and status updates. Checks are binary (pass/fail/NA).</p>
+    <p><strong>Reliability:</strong> Every session is graded 3 times by the same GPT-5 judge. Grading consistency across all providers was 96.7&ndash;97.2%, confirming the scores reflect model behavior, not grader noise. See the <a href="#reliability" style="color:var(--green-1)">appendix</a> for details.</p>
+
+    <!-- ============================== -->
+    <!-- RESULTS: PERFORMANCE MATRIX     -->
+    <!-- ============================== -->
+    <h2>Results</h2>
+    <p>Our results highlight significant divergence in how models handle different aspects of the card-support workflow. The overall spread is just 5 points (88.2&ndash;93.4%), but at the category level, the gap balloons to 65 points. Error handling alone shows a 65-point spread between best and worst.</p>
+
+    <h3>Model Performance Matrix</h3>
+    <table id="providerTable">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Pass Rate</th>
+          <th>N/A Rate</th>
+          <th>Consistency</th>
+          <th>Key Strength</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Pass Rate by Model (micro %)</div>
+      <canvas id="providerPassChart"></canvas>
+    </div>
+
+    <h3>Category Breakdown</h3>
+    <p>The heatmap below reveals where models diverge. Green cells (&ge;90%) indicate strong performance; yellow (75&ndash;90%) is adequate; orange (50&ndash;75%) is weak; red (&lt;50%) is a failure mode.</p>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Pass Rate % by Category &amp; Model</div>
+      <table id="categoryHeatTable" class="heat-table"></table>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Average Pass Rate by Category (all models)</div>
+      <canvas id="categoryAvgChart"></canvas>
+    </div>
+
+    <!-- ============================== -->
+    <!-- KEY FINDINGS                    -->
+    <!-- ============================== -->
+    <h2>Key Findings</h2>
+
+    <div class="finding">
+      <h3>The Error Handling Problem</h3>
+      <p>Error handling remains the hardest category for every model tested&mdash;and the gap is now even starker with 3&times; more data. DeepSeek leads at 79.6%, which would be weak in any other category. Grok-3-fast scores 14.7%, meaning it fails 85% of error-handling checks. This is a 65-point spread within a single category, dwarfing the 5-point spread in overall pass rate. Production banking workflows encounter API errors routinely; any model deployed without supplementary error-recovery logic is a liability.</p>
+    </div>
+
+    <div class="finding">
+      <h3>The Small-Model Surprise</h3>
+      <p>SmolLM3-3B, a 3-billion-parameter model, matches GPT-5 on overall pass rate (90.6% vs. 90.3%) across 300 sessions. It posts strong delivery confirmation (87.9%) and near-perfect data accuracy (96.0%). The trade-off: its replacement execution (75.5%) lags behind DeepSeek (94.5%) and Grok (95.3%). For workflows that prioritize information accuracy and delivery confirmation over replacement flows, SmolLM3 delivers GPT-5-level performance at a fraction of the compute cost.</p>
+    </div>
+
+    <div class="finding">
+      <h3>Scope Management Is Solved</h3>
+      <p>All five models score above 92% on scope management (staying within the card-support domain, not hallucinating capabilities). Grok leads at 97.8%, and even the lowest score (GPT-OSS at 92.2%) is strong. This category no longer differentiates models&mdash;the rubric check is effectively saturated. Future rubric iterations should either raise the bar or replace it with more discriminating checks.</p>
+    </div>
+
+    <div class="finding">
+      <h3>DeepSeek Pulls Away</h3>
+      <p>With 3 runs of data, DeepSeek V3.2 is the clear overall leader at 93.4%&mdash;3 points ahead of the next model. It leads or ties for best in 5 of 8 categories: data accuracy (96.4%), information gathering (98.4%), replacement execution (94.5%), status updates (87.4%), and error handling (79.6%). The only categories where it doesn't lead are delivery confirmation (GPT-5 takes that at 88.5%) and freeze handling (Grok at 95.5%). For deployments that need a single all-purpose model, DeepSeek is the strongest choice.</p>
+    </div>
+
+    <div class="finding">
+      <h3>Error Handling vs. Everything Else: Grok's Split Personality</h3>
+      <p>Grok-3-fast shows the most extreme profile of any model: it leads on freeze handling (95.5%), replacement execution (95.3%), scope management (97.8%), and status updates (91.9%)&mdash;but posts the worst error handling score by a wide margin (14.7%). Removing error handling from the calculation, Grok would rank first overall. This makes Grok ideal for workflows where errors are rare or handled by a fallback system, but dangerous for environments where graceful degradation is required.</p>
+    </div>
+
+    <!-- ============================== -->
+    <!-- APPENDIX: BENCHMARK RELIABILITY -->
+    <!-- ============================== -->
+    <div class="appendix" id="reliability">
+      <h2>Appendix: Benchmark Reliability</h2>
+      <p>Two validation experiments confirm grading stability. First, the 41-check evaluation above uses 3 repeated gradings per session across 3 runs per model (~300 sessions each)&mdash;consistency ranged from 96.7% to 97.2% across all providers. Second, a separate 7-check &times; 5-run &times; 5-eval experiment measured per-check grader variance in detail.</p>
+
+      <h3>Grader Consistency (41 Checks)</h3>
+      <div class="chart-wrap">
+        <div class="chart-title">Grader Consistency % by Model (higher = more stable)</div>
+        <canvas id="providerConsistencyChart"></canvas>
+      </div>
+
+      <h3>Per-Check Grader Variance (7-Check Experiment)</h3>
+      <p>The radar chart shows per-check grader variance from the 5&times;5 experiment. The highest-variance check (submitted_replacement_request, 43.3%) is the main reliability concern; most checks are below 20%.</p>
+
+      <div class="chart-wrap">
+        <div class="chart-title">Per-Check Grader Variance (toggle models)</div>
+        <div class="radar-layout">
+          <div class="radar-canvas">
+            <canvas id="radarChart"></canvas>
+          </div>
+          <div class="radar-legend" id="radarLegend"></div>
+        </div>
+      </div>
+
+      <p class="footnote">Grader variance % = (session-check pairs with &gt;1 unique outcome) / (total pairs) &times; 100. Data: 5&times;5 eval set, GPT-5 judge.</p>
+    </div>
+
+  </section>
+
+  <script>
+    // ===== 41-CHECK PROVIDER DATA (Round 2: 3 runs × 100 scenarios × 3 evals) =====
+    const providerData = JSON.parse(`{"providers":[{"id":"deepseek","provider":"deepseek-ai/DeepSeek-V3.2","n_sessions":300,"n_evals":3,"n_checks":41,"consistency_pct":96.93,"pass_micro_pct":93.39,"pass_macro_pct":90.74,"na_rate_pct":55.87,"per_category":{"data_accuracy":{"pass_micro":0.9637},"delivery_confirmation":{"pass_micro":0.8273},"error_handling":{"pass_micro":0.7959},"freeze_handling":{"pass_micro":0.9098},"information_gathering":{"pass_micro":0.9835},"replacement_execution":{"pass_micro":0.9448},"scope_management":{"pass_micro":0.9597},"status_update_handling":{"pass_micro":0.8743}}},{"id":"gptoss","provider":"openai/gpt-oss-120b","n_sessions":298,"n_evals":3,"n_checks":41,"consistency_pct":96.72,"pass_micro_pct":89.32,"pass_macro_pct":85.35,"na_rate_pct":59.47,"per_category":{"data_accuracy":{"pass_micro":0.9496},"delivery_confirmation":{"pass_micro":0.7581},"error_handling":{"pass_micro":0.6829},"freeze_handling":{"pass_micro":0.8832},"information_gathering":{"pass_micro":0.9249},"replacement_execution":{"pass_micro":0.8766},"scope_management":{"pass_micro":0.9221},"status_update_handling":{"pass_micro":0.8307}}},{"id":"gpt5","provider":"gpt-5 (azure)","n_sessions":299,"n_evals":3,"n_checks":41,"consistency_pct":97.18,"pass_micro_pct":90.28,"pass_macro_pct":86.23,"na_rate_pct":63.15,"per_category":{"data_accuracy":{"pass_micro":0.9553},"delivery_confirmation":{"pass_micro":0.8851},"error_handling":{"pass_micro":0.6842},"freeze_handling":{"pass_micro":0.8822},"information_gathering":{"pass_micro":0.9483},"replacement_execution":{"pass_micro":0.7415},"scope_management":{"pass_micro":0.962},"status_update_handling":{"pass_micro":0.84}}},{"id":"grok","provider":"grok-3-fast","n_sessions":299,"n_evals":3,"n_checks":41,"consistency_pct":96.91,"pass_micro_pct":88.21,"pass_macro_pct":80.51,"na_rate_pct":55.91,"per_category":{"data_accuracy":{"pass_micro":0.9276},"delivery_confirmation":{"pass_micro":0.6174},"error_handling":{"pass_micro":0.1471},"freeze_handling":{"pass_micro":0.9547},"information_gathering":{"pass_micro":0.9443},"replacement_execution":{"pass_micro":0.9526},"scope_management":{"pass_micro":0.9779},"status_update_handling":{"pass_micro":0.9192}}},{"id":"smol","provider":"HuggingFaceTB/SmolLM3-3B","n_sessions":295,"n_evals":3,"n_checks":41,"consistency_pct":97.21,"pass_micro_pct":90.6,"pass_macro_pct":87.74,"na_rate_pct":60.5,"per_category":{"data_accuracy":{"pass_micro":0.9595},"delivery_confirmation":{"pass_micro":0.8787},"error_handling":{"pass_micro":0.7679},"freeze_handling":{"pass_micro":0.8922},"information_gathering":{"pass_micro":0.9481},"replacement_execution":{"pass_micro":0.7547},"scope_management":{"pass_micro":0.9732},"status_update_handling":{"pass_micro":0.8446}}}],"categories":["data_accuracy","delivery_confirmation","error_handling","freeze_handling","information_gathering","replacement_execution","scope_management","status_update_handling"]}`);
+    const providers = providerData.providers;
+    const categories = providerData.categories;
+
+    // ===== 7-CHECK GRADER VARIANCE DATA (historical — 5×5 experiment, 5 models) =====
+    const modelStats = JSON.parse(`{"deepseek-ai/DeepSeek-V3.2": {"total_pairs": 1050, "inconsistent_pairs": 166, "inconsistency_rate": 15.81, "avg_score": 0.5393, "score_count": 749, "per_metric": {"authenticated_user": {"inconsistency_rate": 22.67}, "identified_card": {"inconsistency_rate": 4.67}, "confirmed_delivery_details": {"inconsistency_rate": 18.0}, "provided_delivery_timeline": {"inconsistency_rate": 5.33}, "collected_replacement_reason": {"inconsistency_rate": 18.0}, "submitted_replacement_request": {"inconsistency_rate": 33.33}, "mentioned_freezing_option": {"inconsistency_rate": 8.67}}}, "openai/gpt-oss-120b": {"total_pairs": 1050, "inconsistent_pairs": 178, "inconsistency_rate": 16.95, "avg_score": 0.5343, "score_count": 750, "per_metric": {"authenticated_user": {"inconsistency_rate": 22.0}, "identified_card": {"inconsistency_rate": 6.0}, "confirmed_delivery_details": {"inconsistency_rate": 29.33}, "provided_delivery_timeline": {"inconsistency_rate": 5.33}, "collected_replacement_reason": {"inconsistency_rate": 13.33}, "submitted_replacement_request": {"inconsistency_rate": 34.67}, "mentioned_freezing_option": {"inconsistency_rate": 8.0}}}, "grok-3-fast": {"total_pairs": 1050, "inconsistent_pairs": 165, "inconsistency_rate": 15.71, "avg_score": 0.5747, "score_count": 750, "per_metric": {"authenticated_user": {"inconsistency_rate": 20.0}, "identified_card": {"inconsistency_rate": 4.0}, "confirmed_delivery_details": {"inconsistency_rate": 28.0}, "provided_delivery_timeline": {"inconsistency_rate": 7.33}, "collected_replacement_reason": {"inconsistency_rate": 13.33}, "submitted_replacement_request": {"inconsistency_rate": 28.67}, "mentioned_freezing_option": {"inconsistency_rate": 8.67}}}, "gpt-5 (azure)": {"total_pairs": 1050, "inconsistent_pairs": 224, "inconsistency_rate": 21.33, "avg_score": 0.4237, "score_count": 750, "per_metric": {"authenticated_user": {"inconsistency_rate": 30.0}, "identified_card": {"inconsistency_rate": 9.33}, "confirmed_delivery_details": {"inconsistency_rate": 33.33}, "provided_delivery_timeline": {"inconsistency_rate": 10.67}, "collected_replacement_reason": {"inconsistency_rate": 16.67}, "submitted_replacement_request": {"inconsistency_rate": 43.33}, "mentioned_freezing_option": {"inconsistency_rate": 6.0}}}, "HuggingFaceTB/SmolLM3-3B": {"total_pairs": 1050, "inconsistent_pairs": 187, "inconsistency_rate": 17.81, "avg_score": 0.4568, "score_count": 750, "per_metric": {"authenticated_user": {"inconsistency_rate": 22.67}, "identified_card": {"inconsistency_rate": 8.67}, "confirmed_delivery_details": {"inconsistency_rate": 34.0}, "provided_delivery_timeline": {"inconsistency_rate": 6.0}, "collected_replacement_reason": {"inconsistency_rate": 14.67}, "submitted_replacement_request": {"inconsistency_rate": 34.67}, "mentioned_freezing_option": {"inconsistency_rate": 4.0}}}}`);
+    const modelNames = Object.keys(modelStats);
+
+    const logos = {
+      "deepseek-ai/DeepSeek-V3.2": "https://cdn.simpleicons.org/deepseek/ffffff",
+      "openai/gpt-oss-120b": "https://cdn.simpleicons.org/openai/ffffff",
+      "grok-3-fast": "https://cdn.simpleicons.org/x/ffffff",
+      "gpt-5 (azure)": "https://cdn.simpleicons.org/openai/ffffff",
+      "HuggingFaceTB/SmolLM3-3B": "https://cdn.simpleicons.org/huggingface/ffffff"
+    };
+
+    // ===== BADGES =====
+    const badgeContainer = document.getElementById('modelBadges');
+    providers.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'badge';
+      div.innerHTML = `<img src="${logos[p.provider] || ''}" alt="" /><span>${p.provider}</span>`;
+      badgeContainer.appendChild(div);
+    });
+
+    // ===== KEY STRENGTHS (derived from data) =====
+    const keyStrengths = {
+      'deepseek': 'All-round leader',
+      'gptoss': 'Balanced mid-tier',
+      'grok': 'Status & replacement',
+      'gpt5': 'Delivery & accuracy',
+      'smol': 'Low-cost contender'
+    };
+
+    // ===== PERFORMANCE MATRIX TABLE =====
+    function passColor(val) {
+      if (val >= 90) return 'rgba(34,197,94,0.35)';
+      if (val >= 75) return 'rgba(234,179,8,0.35)';
+      return 'rgba(239,68,68,0.35)';
+    }
+    const sorted = [...providers].sort((a, b) => b.pass_micro_pct - a.pass_micro_pct);
+    const provTbody = document.querySelector('#providerTable tbody');
+    sorted.forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        `<td>${p.provider}</td>` +
+        `<td style="background:${passColor(p.pass_micro_pct)}">${p.pass_micro_pct.toFixed(1)}%</td>` +
+        `<td>${p.na_rate_pct.toFixed(1)}%</td>` +
+        `<td>${p.consistency_pct.toFixed(1)}%</td>` +
+        `<td>${keyStrengths[p.id] || ''}</td>`;
+      provTbody.appendChild(tr);
+    });
+
+    // ===== PASS SCORE BAR CHART =====
+    new Chart(document.getElementById('providerPassChart'), {
+      type: 'bar',
+      data: {
+        labels: sorted.map(p => p.provider),
+        datasets: [{
+          label: 'Pass Rate (micro %)',
+          data: sorted.map(p => p.pass_micro_pct),
+          backgroundColor: 'rgba(123,177,75,0.5)',
+          borderColor: 'rgba(123,177,75,0.9)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        indexAxis: 'y',
+        scales: {
+          x: { beginAtZero: true, max: 100, ticks: { color: '#ddd' }, grid: { color: 'rgba(255,255,255,0.08)' } },
+          y: { ticks: { color: '#ddd' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        },
+        plugins: { legend: { labels: { color: '#ddd' } } }
+      }
+    });
+
+    // ===== CATEGORY HEATMAP =====
+    const catLabels = {
+      data_accuracy: 'Data Accuracy',
+      delivery_confirmation: 'Delivery Confirm.',
+      error_handling: 'Error Handling',
+      freeze_handling: 'Freeze Handling',
+      information_gathering: 'Info Gathering',
+      replacement_execution: 'Replacement Exec.',
+      scope_management: 'Scope Mgmt',
+      status_update_handling: 'Status Updates'
+    };
+    function catHeatColor(val) {
+      const pct = val * 100;
+      if (pct >= 90) return 'rgba(34,197,94,0.4)';
+      if (pct >= 75) return 'rgba(234,179,8,0.35)';
+      if (pct >= 50) return 'rgba(249,115,22,0.35)';
+      return 'rgba(239,68,68,0.35)';
+    }
+    const catHeatTable = document.getElementById('categoryHeatTable');
+    const catHead = document.createElement('tr');
+    catHead.innerHTML = `<th>Category</th>` + sorted.map(p => `<th>${p.id}</th>`).join('');
+    catHeatTable.appendChild(catHead);
+    categories.forEach(cat => {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${catLabels[cat] || cat}</td>` + sorted.map(p => {
+        const val = p.per_category[cat] ? p.per_category[cat].pass_micro : null;
+        if (val === null) return `<td>&mdash;</td>`;
+        const pct = (val * 100).toFixed(1);
+        return `<td style="background:${catHeatColor(val)}">${pct}</td>`;
+      }).join('');
+      catHeatTable.appendChild(row);
+    });
+
+    // ===== CATEGORY AVERAGES BAR CHART =====
+    const catAvgs = categories.map(cat => {
+      const vals = providers.map(p => p.per_category[cat] ? p.per_category[cat].pass_micro * 100 : 0);
+      return vals.reduce((a, b) => a + b, 0) / vals.length;
+    });
+    const catAvgSorted = categories.map((cat, i) => ({ cat, label: catLabels[cat], avg: catAvgs[i] })).sort((a, b) => a.avg - b.avg);
+    new Chart(document.getElementById('categoryAvgChart'), {
+      type: 'bar',
+      data: {
+        labels: catAvgSorted.map(c => c.label),
+        datasets: [{
+          label: 'Avg Pass Rate %',
+          data: catAvgSorted.map(c => c.avg),
+          backgroundColor: catAvgSorted.map(c => {
+            if (c.avg >= 90) return 'rgba(34,197,94,0.5)';
+            if (c.avg >= 75) return 'rgba(234,179,8,0.45)';
+            if (c.avg >= 50) return 'rgba(249,115,22,0.45)';
+            return 'rgba(239,68,68,0.45)';
+          }),
+          borderColor: 'rgba(255,255,255,0.3)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        indexAxis: 'y',
+        scales: {
+          x: { beginAtZero: true, max: 100, ticks: { color: '#ddd' }, grid: { color: 'rgba(255,255,255,0.08)' } },
+          y: { ticks: { color: '#ddd' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    // ===== APPENDIX: CONSISTENCY BAR CHART =====
+    new Chart(document.getElementById('providerConsistencyChart'), {
+      type: 'bar',
+      data: {
+        labels: sorted.map(p => p.provider),
+        datasets: [{
+          label: 'Consistency %',
+          data: sorted.map(p => p.consistency_pct),
+          backgroundColor: 'rgba(106,161,61,0.35)',
+          borderColor: 'rgba(106,161,61,0.9)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { min: 94, max: 100, ticks: { color: '#ddd' }, grid: { color: 'rgba(255,255,255,0.08)' } },
+          x: { ticks: { color: '#ddd' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        },
+        plugins: { legend: { labels: { color: '#ddd' } } }
+      }
+    });
+
+    // ===== APPENDIX: RADAR =====
+    const metrics = Object.keys(modelStats[modelNames[0]].per_metric);
+    const metricLabels = {
+      authenticated_user: 'auth',
+      identified_card: 'card',
+      confirmed_delivery_details: 'delivery',
+      provided_delivery_timeline: 'timeline',
+      collected_replacement_reason: 'reason',
+      submitted_replacement_request: 'submit',
+      mentioned_freezing_option: 'freeze'
+    };
+    const colors = [
+      'rgba(124,252,0,0.35)', 'rgba(255,179,0,0.35)', 'rgba(59,130,246,0.35)',
+      'rgba(239,68,68,0.35)', 'rgba(168,85,247,0.35)', 'rgba(20,184,166,0.35)', 'rgba(234,179,8,0.35)'
+    ];
+    const radarDatasets = modelNames.map((m, idx) => ({
+      label: m,
+      data: metrics.map(metric => modelStats[m].per_metric[metric].inconsistency_rate),
+      backgroundColor: colors[idx % colors.length],
+      borderColor: colors[idx % colors.length].replace('0.35','0.9'),
+      borderWidth: 1, fill: true
+    }));
+    const radarChart = new Chart(document.getElementById('radarChart'), {
+      type: 'radar',
+      data: { labels: metrics.map(m => metricLabels[m] || m), datasets: radarDatasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { r: { beginAtZero: true, max: 50, ticks: { display: false }, grid: { color: 'rgba(255,255,255,0.12)' }, pointLabels: { color: '#ddd' } } }
+      }
+    });
+
+    // Radar legend
+    const legend = document.getElementById('radarLegend');
+    legend.innerHTML = '<h4>Models</h4><button id="legendAll" class="legend-btn">Select all</button>';
+    modelNames.forEach((m, idx) => {
+      const item = document.createElement('div');
+      item.className = 'legend-item on';
+      item.innerHTML = `
+        <span class="legend-swatch" style="background:${colors[idx % colors.length]}"></span>
+        <span class="legend-label">${m}</span>
+        <span class="legend-toggle">&#x2713;</span>
+      `;
+      const onlyBtn = document.createElement('button');
+      onlyBtn.className = 'legend-only';
+      onlyBtn.textContent = 'Only';
+      item.appendChild(onlyBtn);
+      item.addEventListener('click', (e) => {
+        if (e.target === onlyBtn) return;
+        const meta = radarChart.getDatasetMeta(idx);
+        meta.hidden = meta.hidden === null ? true : !meta.hidden;
+        item.classList.toggle('off', meta.hidden);
+        item.classList.toggle('on', !meta.hidden);
+        radarChart.update();
+      });
+      onlyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        radarChart.data.datasets.forEach((_, j) => { radarChart.getDatasetMeta(j).hidden = j !== idx; });
+        document.querySelectorAll('.legend-item').forEach((el, j) => {
+          el.classList.toggle('off', j !== idx);
+          el.classList.toggle('on', j === idx);
+        });
+        radarChart.update();
+      });
+      legend.appendChild(item);
+    });
+    document.getElementById('legendAll').addEventListener('click', () => {
+      radarChart.data.datasets.forEach((_, j) => { radarChart.getDatasetMeta(j).hidden = false; });
+      document.querySelectorAll('.legend-item').forEach(el => { el.classList.remove('off'); el.classList.add('on'); });
+      radarChart.update();
+    });
+
+  </script>
+</body>
+</html>
